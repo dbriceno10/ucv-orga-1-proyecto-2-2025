@@ -1,0 +1,11 @@
+# *.out
+*.exe
+index
+
+.vscode
+
+# Ignorar .Zone.Identifier para WSL
+*Zone.Identifier
+
+# Test IA
+/ia
