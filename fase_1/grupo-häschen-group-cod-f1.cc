@@ -23,13 +23,18 @@ struct datosInstruccion {
     int tipo; // 0:R, 1:I, 2:J
 };
 
-short R[8] = {0};
-bool Z = false, N = false, C = false, V = false;
-unsigned short CP = DIR_INICIAL;
-short Memoria[TAM_MEMORIA] = {0};
+struct pipelineR {
+    unsigned short PCactual;
+    unsigned short instr;
+    bool salto;
+    unsigned short PCsiguiente;
+    int opcode, tipo, rd, rs1,rs2, inm;  
+    short valA, valB, valE, valM;      
+};
 
 vector<datosLinea> listaCodigo;
 map<string, unsigned short> tablaSimbolos; 
+short memtemp[TAM_MEMORIA] = {0};
 
 map<string, datosInstruccion> dicInstr = {
     {"ADD", {0, 0}}, {"SUB", {1, 0}}, {"AND", {2, 0}}, {"ORR", {3, 0}},
@@ -109,6 +114,43 @@ string limpieza(string s) {
     return s.substr(a, (b - a + 1)); 
 }
 
+class CPU{
+    private:
+        short R[8]={0};
+        unsigned short CP=DIR_INICIAL;
+        short Memoria[TAM_MEMORIA]={0};
+        bool Z = false, N = false, C = false, V = false;
+        int ciclos=0, instr=0;
+  
+    public:
+        void memotemp(short* temp){
+            for(int i=0; i<TAM_MEMORIA; i++){
+            Memoria[i] = temp[i];
+            }
+        }
+        void fetch(pipelineR &pipe){
+        }
+        void decode(pipelineR &pipe){
+        }
+
+        void execute(pipelineR &pipe){
+        }
+
+        void memory(pipelineR &pipe){
+        }
+
+        void writeBack(pipelineR &pipe){
+        }
+        void ejecutarPrograma(){
+        }
+        void imprimirReporte(ofstream &reporte) {
+            reporte << "\nESTADO FINAL DE REGISTROS:\n\n";
+            for (int i = 0; i < 8; i++) {
+                reporte << "R" << dec << i << ": 0x" << right << hex << uppercase << setw(4) << setfill('0') << (unsigned short)R[i] << endl;
+            }   
+        }
+};
+
 void procLinea(string linea, unsigned short& dirActual, int pase) {
     linea = limpieza(linea);
     if (linea.empty()) return;
@@ -153,7 +195,7 @@ void procLinea(string linea, unsigned short& dirActual, int pase) {
     if (nem == ".WORD") {
         if (pase == 2) {
             unsigned short valor = (unsigned short)texto_a_numero(partes[1]);
-            Memoria[dirActual] = (short)valor;
+            memtemp[dirActual] = (short)valor;
             datosLinea info = {dirActual, valor, lineaLimpia, true};
             listaCodigo.push_back(info);
         }
@@ -170,13 +212,13 @@ void procLinea(string linea, unsigned short& dirActual, int pase) {
         if (pase == 2) {
             for (size_t i = 0; i < contenido.length(); i++) {
                 char c = contenido[i];
-                Memoria[dirActual] = (short)c;
+                memtemp[dirActual] = (short)c;
                 string display = (i == 0) ? lineaLimpia : string(1, c);
                 datosLinea info = {dirActual, (unsigned short)c, display, true};
                 listaCodigo.push_back(info);
                 dirActual++;
             }
-            Memoria[dirActual] = 0;
+            memtemp[dirActual] = 0;
             datosLinea info = {dirActual, 0, "\\0", true};
             listaCodigo.push_back(info);
             dirActual++;
@@ -233,7 +275,7 @@ void procLinea(string linea, unsigned short& dirActual, int pase) {
     }
 
     if (pase == 2) {
-        Memoria[dirActual] = (short)maquina;
+        memtemp[dirActual] = (short)maquina;
         datosLinea info = {dirActual, maquina, lineaLimpia, true};
         listaCodigo.push_back(info);
     }
@@ -418,11 +460,6 @@ int main() {
 	reporte << "-------------------------------------------------\n";
 
 	simular();
-
-	reporte << "\nESTADO FINAL DE REGISTROS:\n\n";
-	for (int i = 0; i < 8; i++) {
-		reporte << "R" << dec << i << ": 0x" << right << hex << uppercase << setw(4) << setfill('0') << (unsigned short)R[i] << endl;
-	}
 
 	unsigned short psr = 0;
 	if (V) psr |= 1; if (C) psr |= 2; if (N) psr |= 4; if (Z) psr |= 8;
