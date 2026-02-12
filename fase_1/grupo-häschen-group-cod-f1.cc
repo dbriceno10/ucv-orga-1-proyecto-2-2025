@@ -129,8 +129,26 @@ class CPU{
             }
         }
         void fetch(pipelineR &pipe){
+            if(CP >=TAM_MEMORIA) return;
+            pipe.PCactual = CP;
+            pipe.instr = (unsigned short)Memoria[CP];
+            CP++;
         }
         void decode(pipelineR &pipe){
+            pipe.opcode = (pipe.instr >> 12) & 0xF;
+            pipe.tipo = (pipe.instr >> 10) & 0x3;	
+            if(pipe.tipo == 0){ 
+            	pipe.rs1 = (pipe.instr >> 7) & 0x7;
+            	pipe.rs2 = (pipe.instr >> 4) & 0x7;
+            	pipe.rd = pipe.instr & 0xF;
+            }else if(pipe.tipo == 1){ 
+            		pipe.rs1 = (pipe.instr >> 7) & 0x7;
+            		pipe.inm = pipe.instr & 0x7F;
+            		if (pipe.inm & 0x40) pipe.inm |= 0xFF80; 
+            }else if(pipe.tipo == 2){ 
+            		pipe.inm = pipe.instr & 0x7F;
+            		if (pipe.inm & 0x40) pipe.inm |= 0xFF80; 
+            }
         }
 
         void execute(pipelineR &pipe){
