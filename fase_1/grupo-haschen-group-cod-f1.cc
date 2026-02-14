@@ -23,7 +23,6 @@ struct datosInstruccion {
     int tipo; // 0:R, 1:I, 2:J
 };
 
-// Estructura del "Carrito" (Pipeline Latch)
 struct pipelineR {
     unsigned short PCactual;
     unsigned short instr;
@@ -247,9 +246,6 @@ void procLinea(string linea, unsigned short& dirActual, int pase) {
     dirActual++;
 }
 
-// ==========================================
-// CLASE CPU (FASE 2: PIPELINE LISTO)
-// ==========================================
 class CPU {
 private:
     short R[8] = {0};
@@ -298,7 +294,6 @@ public:
             if (pipe.inm & 0x40) pipe.inm |= 0xFF80; 
         }
       
-        // Reset Banderas de Control
         pipe.RegWrite = false;
         pipe.MemRead = false;
         pipe.MemWrite = false;
@@ -308,7 +303,7 @@ public:
         pipe.Jump = false;
         pipe.Halt = false;
       
-        // Unidad de Control Logica
+        // Unidad de control logica
         if(pipe.tipo == 0) {
             if(pipe.opcode == 4) { // CMP
                 pipe.RegWrite = false;
@@ -348,10 +343,10 @@ public:
         if (pipe.Halt) return;
         pipe.TomarSalto = false;
       
-        // Calculo de Destinos para Saltos
+        //calculo de destinos para saltos
         if(pipe.Jump) {
             if(pipe.opcode == 4 && pipe.tipo == 2) { // JAL
-                pipe.valE = pipe.PCactual + 1; // Guardamos dirección de retorno
+                pipe.valE = pipe.PCactual + 1; 
             }
             if(pipe.opcode == 5 || pipe.opcode == 6) pipe.PCsiguiente = R[7]; // RET
             else pipe.PCsiguiente = pipe.PCactual + pipe.inm;
@@ -386,7 +381,7 @@ public:
                 break;
             case 1: // SUB, SUBI
             case 4: // CMP, LW
-                if(pipe.tipo == 1 && pipe.opcode == 4) { // Si es LW, es suma (Base + Offset)
+                if(pipe.tipo == 1 && pipe.opcode == 4) {
                    res = op1 + op2;
                 }
                 else { // Si es SUB, SUBI, CMP es resta
@@ -423,7 +418,6 @@ public:
         
         pipe.valE = (short)res;
 
-        // Banderas Z y N
         if(pipe.opcode != 3 && !pipe.MemRead && !pipe.MemWrite && !pipe.Jump && !pipe.Branch) {
             Z = (pipe.valE == 0);
             N = (pipe.valE < 0);
@@ -463,7 +457,7 @@ public:
                 break;
             }
             
-            pipelineR pipe; // Creamos el carrito para este ciclo
+            pipelineR pipe; 
             
             fetch(pipe);
             decode(pipe);
@@ -471,17 +465,14 @@ public:
             memory(pipe);
             writeBack(pipe);
           
-            // --- MAGIA: IMPRIMIR EL ESTADO TRAS CADA PASO ---
             reporte << "\n[Ciclo " << dec << ciclos << "] PC Ejecutado: 0x" << right << hex << uppercase << setw(4) << setfill('0') << pipe.PCactual;
             reporte << " | Instruccion: 0x" << right << setw(4) << setfill('0') << pipe.instr << "\n";
             reporte << "Estado de los Registros:\n";
             for (int i = 0; i < 8; i++) {
                 reporte << "R" << i << ": 0x" << right << hex << uppercase << setw(4) << setfill('0') << (unsigned short)R[i] << "   ";
-                if (i == 3) reporte << "\n"; // Salto de linea para que se vea ordenado
+                if (i == 3) reporte << "\n";
             }
             reporte << "\n-------------------------------------------------";
-            // ------------------------------------------------
-
             ciclos++;
             instrCount++;
         }
@@ -571,7 +562,6 @@ int main() {
 
     reporte << "-------------------------------------------------\n";
 
-    // --- MAGIA DE LA FASE 2: USO DE LA CLASE CPU ---
     CPU procesador;
     procesador.memotemp(memtemp);
     procesador.ejecutarPrograma(reporte);
