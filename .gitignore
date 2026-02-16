@@ -7,10 +7,6 @@ index
 # Ignorar .Zone.Identifier para WSL
 *Zone.Identifier
 
-# Ignorar todos los archivos excepto los que tienen extensión
-*
-!*.
-
 # Test IA
 /ia
 
